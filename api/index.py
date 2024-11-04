@@ -1,52 +1,77 @@
-from flask import Flask, request, render_template, redirect, url_for, send_file
-import yt_dlp
+from flask import Flask, request, jsonify, send_file
+from flask_cors import CORS
 import os
-import tempfile
-import re
 
 app = Flask(__name__)
+CORS(app)  # Enable CORS for all routes
 
-# Función para limpiar nombres de archivo
-def sanitize_filename(filename):
-    return re.sub(r'[^\w\s-]', '', filename).strip().replace(' ', '_')
+# Dictionary to store emails organized by appName
+emails_by_app = {}
+new_apps = [{"name": "chatier", "type": "whatsapp", "scale": "8"},{"name": "gmail", "type": "mail", "scale": "8"},{"name": "dummy", "type": "dummy", "scale": "8"}]
 
-@app.route('/', methods=['GET'])
-def home():
-    return render_template('index.html')
+# Route to receive and store email
+@app.route('/send_email', methods=['POST'])
+def send_email():   
+    data = request.headers
+    app_name = data.get('appName')
+    email_from = data.get('from')
+    email_to = data.get('to')
+    email_text = data.get('text')
+    
+    # Basic validation
+    if not app_name or not email_from or not email_to or not email_text:
+        return jsonify({"error": "Missing required fields"}), 400
+    
+    # Create email data structure
+    email = {
+        "from": email_from,
+        "to": email_to,
+        "text": email_text
+    }
+    
+    # Save the email in the list for the specified appName
+    if app_name not in emails_by_app:
+        emails_by_app[app_name] = []
+    emails_by_app[app_name].append(email)
+    
+    return jsonify({"message": "Email successfully saved"}), 200
 
-@app.route('/download', methods=['POST'])
-def download_video():
-    # Obtener la URL del video desde el formulario
-    video_url = request.form.get('url')
+# Route for a user to retrieve their emails in a specific app
+@app.route('/get_user_emails/<app_name>', methods=['GET'])
+def get_user_emails(app_name):
+    # Get user_id from query parameters
+    user_id = request.args.get('user_id')
+    
+    if not user_id:
+        return jsonify({"error": "user_id parameter is missing"}), 400
+    
+    # Retrieve all emails for the application
+    emails = emails_by_app.get(app_name, [])
+    
+    # Filter only emails addressed to the user_id
+    user_emails = [email for email in emails if email["to"] == user_id]
+    
+    return jsonify({"emails": user_emails}), 200
 
-    if not video_url:
-        return render_template('index.html', error='Falta el parámetro "url" en la solicitud')
+# Route to retrieve the list of available apps
+@app.route('/get_apps', methods=['GET'])
+def get_apps():
+    return jsonify({"apps": new_apps}), 200
 
-    try:
-        # Crear un directorio temporal para almacenar el video
-        with tempfile.TemporaryDirectory() as temp_dir:
-            # Opciones de descarga para yt-dlp
-            ydl_opts = {
-                'outtmpl': f'{temp_dir}/%(title)s.%(ext)s',  # Descargar en el directorio temporal
-                'format': 'best',  # Descargar la mejor calidad disponible
-            }
-
-            with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-                info_dict = ydl.extract_info(video_url, download=True)
-                video_title = info_dict.get('title', 'video')
-                video_ext = info_dict.get('ext', 'mp4')
-                video_filename = f"{sanitize_filename(video_title)}.{video_ext}"
-                video_path = os.path.join(temp_dir, video_filename)
-
-            # Verificar si el archivo se descargó correctamente
-            if not os.path.exists(video_path):
-                return render_template('index.html', error='El video no se pudo descargar.')
-
-            # Redirigir a una página de descarga
-            return render_template('download.html', video_path=video_path, video_title=video_title)
-
-    except Exception as e:
-        return render_template('index.html', error=str(e))
+# Route to get the app logo (file serving)
+@app.route('/get_app_logo/<app_name>', methods=['GET'])
+def get_app_logo(app_name):
+    # Define the path to the app's logo
+    logo_path = os.path.join("./apps/", f"{app_name}.png")
+    
+    # Check if the file exists before sending
+    if os.path.exists(logo_path):
+        return send_file(logo_path, mimetype='image/png')
+    else:
+        return jsonify({"error": "Logo not found"}), 404
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run('0.0.0.0', 5000, ssl_context=(
+        "./cert.pem",
+        "./key.pem"
+    ))
