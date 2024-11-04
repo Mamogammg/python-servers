@@ -71,7 +71,4 @@ def get_app_logo(app_name):
         return jsonify({"error": "Logo not found"}), 404
 
 if __name__ == '__main__':
-    app.run('0.0.0.0', 5000, ssl_context=(
-        "./cert.pem",
-        "./key.pem"
-    ))
+    app.run('0.0.0.0', 5000)
