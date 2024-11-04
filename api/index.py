@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify, send_file
+from flask import Flask, request, jsonify, send_file, send_from_directory
 from flask_cors import CORS
 import os
 
@@ -62,11 +62,11 @@ def get_apps():
 @app.route('/get_app_logo/<app_name>', methods=['GET'])
 def get_app_logo(app_name):
     # Define the path to the app's logo
-    logo_path = os.path.join("./apps/", f"{app_name}.png")
+    logo_path = os.path.join("apps", f"{app_name}.png")
     
     # Check if the file exists before sending
     if os.path.exists(logo_path):
-        return send_file(logo_path, mimetype='image/png')
+        return send_from_directory("apps", f"{app_name}.png", mimetype='image/png')
     else:
         return jsonify({"error": "Logo not found"}), 404
 
