@@ -3,45 +3,49 @@ from flask import Flask, request, jsonify
 app = Flask(__name__)
 
 # Diccionario inicial con el estado de los bits
-bits = {"1": False, "2": False, "3": False, "4": False, "5": False, "6": False, "7": False, "Send": False}
+bits = {
+    "1": False, "2": False, "3": False, "4": False, "5": False,
+    "6": False, "7": False, "Send": False
+}
 
-# Función para obtener el carácter basado en el estado de los bits
-def obtener_caracter(bits):
-    # Combinar bits 1-5 para obtener un índice numérico
-    indice = sum((1 << (i - 1)) * bits[str(i)] for i in range(1, 6))
-    
-    # Determinar si es una letra
-    if bits["7"]:
-        # Verificar si es mayúscula o minúscula
-        es_mayuscula = bits["6"]
-        # Letras y caracteres especiales
-        if 1 <= indice <= 26:  # Letras a-z
-            letra = chr(ord('A') + indice - 1) if es_mayuscula else chr(ord('a') + indice - 1)
-        elif indice == 27:  # Letra ñ o Ñ
-            letra = 'Ñ' if es_mayuscula else 'ñ'
-        elif 28 <= indice <= 32:  # Letras con tilde á, é, í, ó, ú
-            tildes = ['á', 'é', 'í', 'ó', 'ú']
-            letra = tildes[indice - 28].upper() if es_mayuscula else tildes[indice - 28]
+# Tabla de caracteres para valores especiales
+caracteres_especiales = "0123456789.,:-_\"     "  # Índices 0-15 son estos caracteres
+
+# Función para interpretar el carácter según el estado de los bits
+def interpretar_caracter():
+    # Leer los valores de los bits
+    es_letra = bits["7"]
+    es_mayuscula = bits["6"]
+
+    # Calcular el valor de bits 1-5 como un número binario
+    valor_bits = sum(2**(i-1) if bits[str(i)] else 0 for i in range(1, 6))
+
+    # Interpretar como letra
+    if es_letra:
+        # Si es una letra, determinar si es una letra común, ñ o una vocal con acento
+        if 0 <= valor_bits <= 25:  # Letras a-z
+            caracter = chr(ord('A') + valor_bits) if es_mayuscula else chr(ord('a') + valor_bits)
+        elif valor_bits == 26:  # Letra ñ
+            caracter = 'Ñ' if es_mayuscula else 'ñ'
+        elif 27 <= valor_bits <= 31:  # Letras con acento
+            acentos = ["Á", "É", "Í", "Ó", "Ú"] if es_mayuscula else ["á", "é", "í", "ó", "ú"]
+            caracter = acentos[valor_bits - 27]
         else:
-            letra = ' '  # Blanco para valores fuera del rango
-        
+            caracter = " "  # Blanco si el valor está fuera de rango
     else:
-        # No es letra, procesar como número o símbolo especial
-        if 1 <= indice <= 10:  # Números 0-9
-            letra = str(indice - 1)
-        elif 11 <= indice <= 16:  # Símbolos especiales
-            simbolos = ['.', ',', ':', '-', '_', '"']
-            letra = simbolos[indice - 11]
+        # Interpretar como carácter especial o número
+        if 0 <= valor_bits <= 9:
+            caracter = str(valor_bits)  # Dígitos 0-9
+        elif 10 <= valor_bits <= 15:
+            caracter = caracteres_especiales[valor_bits - 10]  # Caracteres especiales
         else:
-            letra = ' '  # Blanco para valores fuera del rango
-        
-    return letra
+            caracter = " "  # Blanco si el valor está fuera de rango
 
-# Ruta para controlar los bits
+    return caracter
+
+# Ruta para actualizar el estado de los bits
 @app.route('/<bit>/<estado>', methods=['POST'])
 def controlar_bit(bit, estado):
-    print(bits)
-    
     # Comprobar si el estado es válido (on o off)
     if estado not in ['on', 'off']:
         return jsonify({"error": "Estado inválido, usa 'on' o 'off'"}), 400
@@ -56,11 +60,17 @@ def controlar_bit(bit, estado):
     # Actualizar el estado del bit en el diccionario
     bits[number] = (estado == 'on')
 
-    # Imprimir carácter si bitSend está activo
+    print(f"{bit} goes {estado}.")
+
+    print(bits)
+
+    # Comprobar si el bit `Send` está activado para interpretar el carácter
     if bits["Send"]:
-        caracter = obtener_caracter(bits)
-        print(f"Carácter generado: {caracter}")
-    
+        caracter = interpretar_caracter()
+        print(f"Carácter interpretado: '{caracter}'")
+        # Desactivar el bit Send después de procesar
+        bits["Send"] = False
+
     # Respuesta con el estado de todos los bits
     return jsonify({
         "bit": bit,
