@@ -62,11 +62,11 @@ def get_apps():
 @app.route('/get_app_logo/<app_name>', methods=['GET'])
 def get_app_logo(app_name):
     # Define the path to the app's logo
-    logo_path = os.path.join("apps", f"{app_name}.png")
+    logo_path = os.path.join("public/apps", f"{app_name}.png")
     
     # Check if the file exists before sending
     if os.path.exists(logo_path):
-        return send_from_directory("apps", f"{app_name}.png", mimetype='image/png')
+        return send_from_directory("public/apps", f"{app_name}.png", mimetype='image/png')
     else:
         return jsonify({"error": "Logo not found"}), 404
 
