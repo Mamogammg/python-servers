@@ -40,6 +40,8 @@ def obtener_caracter(bits):
 # Ruta para controlar los bits
 @app.route('/<bit>/<estado>', methods=['POST'])
 def controlar_bit(bit, estado):
+    print(bits)
+    
     # Comprobar si el estado es válido (on o off)
     if estado not in ['on', 'off']:
         return jsonify({"error": "Estado inválido, usa 'on' o 'off'"}), 400
