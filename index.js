@@ -17,7 +17,7 @@ const newApps = [
     { name: "chatier", type: "whatsapp", scale: "8" },
     { name: "gmail", type: "mail", scale: "8" },
     { name: "dummy", type: "dummy", scale: "8" },
-    { name: "chati", url: "https://turbowarp.org/fullscreen?project_url=https://mamogammg.github.io/scratch-projects/Chati.sb3", type: "iframe", scale: "8" },
+    { name: "chati", url: "https://turbowarp.org/embed?project_url=https://mamogammg.github.io/scratch-projects/Chati.sb3", type: "iframe", scale: "8" },
 ];
 
 // Route to receive and store emails
