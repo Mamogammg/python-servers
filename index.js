@@ -22,6 +22,7 @@ const newApps = [
 // Route to receive and store emails
 app.post('/send_email', (req, res) => {
     const { appName, from, to, text } = req.body;
+    console.log(req.body)
 
     // Basic validation
     if (!appName || !from || !to || !text) {
