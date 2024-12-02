@@ -17,6 +17,7 @@ const newApps = [
     { name: "chatier", type: "whatsapp", scale: "8" },
     { name: "gmail", type: "mail", scale: "8" },
     { name: "dummy", type: "dummy", scale: "8" },
+    { name: "chati", url: "https://chatgpt.com", type: "iframe", scale: "8" },
 ];
 
 // Route to receive and store emails
