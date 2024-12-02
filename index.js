@@ -66,7 +66,7 @@ app.get('/get_app_logo/:appName', (req, res) => {
     const { appName } = req.params;
 
     // Define the logo file path
-    const logoPath = path.join(__dirname, "public/apps", `${appName}.png`);
+    const logoPath = path.join(__dirname, "apps", `${appName}.png`);
 
     // Check if the file exists
     if (fs.existsSync(logoPath)) {
