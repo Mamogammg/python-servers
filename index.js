@@ -21,18 +21,18 @@ const newApps = [
 
 // Route to receive and store emails
 app.post('/send_email', (req, res) => {
-    const { appName, from, to, text } = req.body;
-    console.log(req.body)
+   const appName = req.headers['appname'];
+    const emailFrom = req.headers['from'];
+    const emailTo = req.headers['to'];
+    const emailText = req.headers['text'];
 
-    // Basic validation
-    if (!appName || !from || !to || !text) {
-        return res.status(400).json({ error: "Missing required fields" });
+    // Validar que todos los campos requeridos están presentes
+    if (!appName || !emailFrom || !emailTo || !emailText) {
+        return res.status(400).json({ error: "Missing required headers" });
     }
 
-    // Create email object
-    const email = { from, to, text };
-
-    // Save email in the corresponding app's list
+    // Almacenar el email
+    const email = { from: emailFrom, to: emailTo, text: emailText };
     if (!emailsByApp[appName]) {
         emailsByApp[appName] = [];
     }
